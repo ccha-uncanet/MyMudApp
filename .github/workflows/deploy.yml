@@ -15,14 +15,18 @@ jobs:
         with:
           dotnet-version: '9.0.x' 
 
-      - name: Publish Project
-        # ใช้คำสั่งหาไฟล์ .csproj อัตโนมัติ เพื่อป้องกันปัญหาเรื่องชื่อโฟลเดอร์ไม่ตรง
-        run: dotnet publish **/*.csproj -c Release -o release
+      - name: Restore Dependencies
+        run: dotnet restore
 
-      - name: Fix Service Worker and Base Href (Optional but helps)
+      - name: Build and Publish
+        # คำสั่งนี้จะค้นหาไฟล์ .csproj ในทุกโฟลเดอร์ให้อัตโนมัติ
         run: |
-          # สร้างไฟล์ 404.html จาก index.html เพื่อป้องกันเวลา Refresh แล้วเจอ 404
-          cp release/wwwroot/index.html release/wwwroot/404.html
+          PROJECT_PATH=$(find . -name "*.csproj" | grep -v ".Client" | head -n 1)
+          echo "Found project at: $PROJECT_PATH"
+          dotnet publish $PROJECT_PATH -c Release -o release
+
+      - name: Copy index.html to 404.html
+        run: cp release/wwwroot/index.html release/wwwroot/404.html
 
       - name: Upload Artifact
         uses: actions/upload-pages-artifact@v3
