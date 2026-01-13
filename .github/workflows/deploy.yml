@@ -14,21 +14,21 @@ jobs:
           dotnet-version: '9.0.x'
 
       - name: Publish
-        # เราสั่ง Build ไปที่โปรเจกต์ .Client เพราะ GitHub Pages รันได้เฉพาะฝั่ง Client ครับ
-        run: dotnet publish MyMudApp.Client/MyMudApp.Client.csproj -c Release -o release
+        # เราเจาะจงให้มันไปอยู่ที่โฟลเดอร์ 'output' แทนเพื่อกันสับสน
+        run: dotnet publish MyMudApp.Client/MyMudApp.Client.csproj -c Release -o output
 
       - name: Fix for GitHub Pages
         run: |
-          # ป้องกัน Error 404 เวลาเพื่อนกด Refresh หน้าเว็บ
-          cp release/wwwroot/index.html release/wwwroot/404.html
-          # บอก GitHub ว่าไม่ต้องใช้ Jekyll ประมวลผล
-          touch release/wwwroot/.nojekyll
+          # แก้ปัญหาเรื่อง Path ของไฟล์ index.html
+          cp output/wwwroot/index.html output/wwwroot/404.html
+          touch output/wwwroot/.nojekyll
 
       - name: Upload Artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: release/wwwroot
-
+          # ชี้ไปที่โฟลเดอร์ output ที่เราเพิ่งสร้าง
+          path: output/wwwroot
+          
   deploy:
     needs: build-setup
     runs-on: ubuntu-latest
