@@ -6,15 +6,15 @@ jobs:
   build-setup:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4 # อัปเดตเป็น v4
       - name: Setup .NET
-        uses: actions/setup-dotnet@v3
+        uses: actions/setup-dotnet@v4 # อัปเดตเป็น v4
         with:
-          dotnet-version: '10.0.x' # ใช้เวอร์ชันเดียวกับในเครื่องคุณ
+          dotnet-version: '9.0.x'
       - name: Publish
-        run: dotnet publish MyMudApp/MyMudApp.csproj -c Release -o release --nologo
+        run: dotnet publish MyMudApp/MyMudApp.csproj -c Release -o release
       - name: Upload Artifact
-        uses: actions/upload-pages-artifact@v2
+        uses: actions/upload-pages-artifact@v3 # อัปเดตเป็น v3 (ตัวล่าสุดของ upload-pages)
         with:
           path: release/wwwroot
   deploy:
@@ -27,4 +27,4 @@ jobs:
       name: github-pages
     steps:
       - name: Deploy to GitHub Pages
-        uses: actions/deploy-pages@v2
+        uses: actions/deploy-pages@v4 # อัปเดตเป็น v4
