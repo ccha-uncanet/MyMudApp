@@ -15,24 +15,44 @@ jobs:
         run: dotnet publish MyMudApp.Client/MyMudApp.Client.csproj -c Release -o release
       - name: Find and Move index.html
         run: |
+          # แสดงโครงสร้างโฟลเดอร์
+          echo "โครงสร้างโฟลเดอร์ release:"
+          ls -la release/
+          
           # หาว่า index.html อยู่ที่ไหน
           REAL_PATH=$(find release -name "index.html" -type f | head -n 1)
+          
+          if [ -z "$REAL_PATH" ]; then
+            echo "ไม่พบ index.html!"
+            exit 1
+          fi
+          
           REAL_DIR=$(dirname "$REAL_PATH")
           echo "เจอไฟล์ที่: $REAL_PATH"
           echo "โฟลเดอร์: $REAL_DIR"
           
-          # ถ้า index.html อยู่ใน subdirectory ให้ย้ายขึ้นมา
+          # ถ้า index.html ไม่ได้อยู่ที่ release/ ตรงๆ ให้ย้าย
           if [ "$REAL_DIR" != "release" ]; then
-            # สร้างโฟลเดอร์ชั่วคราวนอก release
-            mkdir -p ../temp_deploy
-            cp -r $REAL_DIR/* ../temp_deploy/
+            echo "กำลังย้ายไฟล์..."
+            # ใช้ rsync แทน cp เพื่อความปลอดภัย
+            rsync -av "$REAL_DIR/" release_temp/
             rm -rf release
-            mv ../temp_deploy release
+            mv release_temp release
+            echo "ย้ายเสร็จแล้ว"
+          fi
+          
+          # ตรวจสอบว่ามี index.html แล้ว
+          if [ ! -f "release/index.html" ]; then
+            echo "Error: ไม่พบ index.html หลังย้าย!"
+            exit 1
           fi
           
           # สร้างไฟล์ที่จำเป็นสำหรับ GitHub Pages
           cp release/index.html release/404.html
           touch release/.nojekyll
+          
+          echo "เสร็จสิ้น! ไฟล์ในโฟลเดอร์ release:"
+          ls -la release/
       - name: Upload Artifact
         uses: actions/upload-pages-artifact@v3
         with:
