@@ -7,34 +7,27 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '9.0.x'
-
       - name: Publish
         run: dotnet publish MyMudApp.Client/MyMudApp.Client.csproj -c Release -o release
-
-      - name: Fix for GitHub Pages
+      - name: Find and Move index.html
         run: |
-          # ค้นหาว่า index.html อยู่ที่ไหนแล้วดึงออกมาไว้ที่หน้าแรกของโฟลเดอร์ที่จะส่งขึ้นเว็บ
-          INDEX_FILE=$(find release -name "index.html" | head -n 1)
-          INDEX_DIR=$(dirname "$INDEX_FILE")
-          echo "Found index.html in: $INDEX_DIR"
-          
-          # ย้ายไฟล์ทั้งหมดจากโฟลเดอร์ที่เจอออกมาไว้ที่ release/
-          cp -r "$INDEX_DIR"/* release/
-          
-          # สร้างไฟล์ 404 และ .nojekyll เพื่อให้ GitHub Pages ทำงานถูกต้อง
+          # สั่งให้ Linux ช่วยหาว่า index.html อยู่ที่ไหน
+          REAL_PATH=$(find release -name "index.html" | head -n 1)
+          REAL_DIR=$(dirname "$REAL_PATH")
+          echo "เจอไฟล์ที่: $REAL_PATH"
+          # ย้ายของทั้งหมดในโฟลเดอร์นั้นออกมาไว้ข้างนอกสุดของ release
+          cp -r $REAL_DIR/* release/
+          # สร้างไฟล์ที่จำเป็นสำหรับ GitHub Pages
           cp release/index.html release/404.html
           touch release/.nojekyll
-
       - name: Upload Artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: release
-          
   deploy:
     needs: build-setup
     runs-on: ubuntu-latest
