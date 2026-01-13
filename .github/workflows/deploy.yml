@@ -1,38 +1,27 @@
 name: Deploy to GitHub Pages
-
 on:
   push:
     branches: [ main ]
-
 jobs:
   build-setup:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '9.0.x' 
-
-      - name: Restore Dependencies
-        run: dotnet restore
-
-      - name: Build and Publish
-        # คำสั่งนี้จะค้นหาไฟล์ .csproj ในทุกโฟลเดอร์ให้อัตโนมัติ
+          dotnet-version: '9.0.x'
+      - name: Publish
+        # สั่ง Build เฉพาะโปรเจกต์ Client เพื่อให้ได้ไฟล์ Static
+        run: dotnet publish MyMudApp.Client/MyMudApp.Client.csproj -c Release -o release
+      - name: Fix for GitHub Pages
         run: |
-          PROJECT_PATH=$(find . -name "*.csproj" | grep -v ".Client" | head -n 1)
-          echo "Found project at: $PROJECT_PATH"
-          dotnet publish $PROJECT_PATH -c Release -o release
-
-      - name: Copy index.html to 404.html
-        run: cp release/wwwroot/index.html release/wwwroot/404.html
-
+          # Copy ไฟล์หน้าแรกไปเป็น 404 เพื่อกัน Error
+          cp release/wwwroot/index.html release/wwwroot/404.html
       - name: Upload Artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: release/wwwroot
-
   deploy:
     needs: build-setup
     runs-on: ubuntu-latest
