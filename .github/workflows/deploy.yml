@@ -15,12 +15,20 @@ jobs:
         run: dotnet publish MyMudApp.Client/MyMudApp.Client.csproj -c Release -o release
       - name: Find and Move index.html
         run: |
-          # สั่งให้ Linux ช่วยหาว่า index.html อยู่ที่ไหน
-          REAL_PATH=$(find release -name "index.html" | head -n 1)
+          # หาว่า index.html อยู่ที่ไหน
+          REAL_PATH=$(find release -name "index.html" -type f | head -n 1)
           REAL_DIR=$(dirname "$REAL_PATH")
           echo "เจอไฟล์ที่: $REAL_PATH"
-          # ย้ายของทั้งหมดในโฟลเดอร์นั้นออกมาไว้ข้างนอกสุดของ release
-          cp -r $REAL_DIR/* release/
+          echo "โฟลเดอร์: $REAL_DIR"
+          
+          # ย้ายไฟล์ทั้งหมดจาก wwwroot มาไว้ที่ temp ก่อน
+          mkdir -p temp
+          cp -r $REAL_DIR/* temp/
+          
+          # ลบ release เดิมและย้ายจาก temp มาแทน
+          rm -rf release
+          mv temp release
+          
           # สร้างไฟล์ที่จำเป็นสำหรับ GitHub Pages
           cp release/index.html release/404.html
           touch release/.nojekyll
