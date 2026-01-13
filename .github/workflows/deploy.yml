@@ -14,24 +14,25 @@ jobs:
           dotnet-version: '9.0.x'
 
       - name: Publish
-        # สร้างไฟล์ไปไว้ที่โฟลเดอร์ชื่อ release
         run: dotnet publish MyMudApp.Client/MyMudApp.Client.csproj -c Release -o release
 
       - name: Fix for GitHub Pages
-        # เปลี่ยนจากการ copy เป็นการสร้างไฟล์ 404 และ .nojekyll ใหม่เลย
         run: |
-          echo "Fixing paths for GitHub Pages..."
-          # ตรวจสอบตำแหน่งไฟล์จริงและย้ายมาไว้ที่หน้าหลักของ release
-          mv release/wwwroot/* release/
-          # สร้างไฟล์ 404 จาก index
+          # ค้นหาว่า index.html อยู่ที่ไหนแล้วดึงออกมาไว้ที่หน้าแรกของโฟลเดอร์ที่จะส่งขึ้นเว็บ
+          INDEX_FILE=$(find release -name "index.html" | head -n 1)
+          INDEX_DIR=$(dirname "$INDEX_FILE")
+          echo "Found index.html in: $INDEX_DIR"
+          
+          # ย้ายไฟล์ทั้งหมดจากโฟลเดอร์ที่เจอออกมาไว้ที่ release/
+          cp -r "$INDEX_DIR"/* release/
+          
+          # สร้างไฟล์ 404 และ .nojekyll เพื่อให้ GitHub Pages ทำงานถูกต้อง
           cp release/index.html release/404.html
-          # สร้างไฟล์ปิดกั้น Jekyll
           touch release/.nojekyll
 
       - name: Upload Artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          # ชี้ไปที่ release โดยตรง
           path: release
           
   deploy:
