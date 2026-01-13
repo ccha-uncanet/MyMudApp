@@ -1,0 +1,30 @@
+name: Deploy to GitHub Pages
+on:
+  push:
+    branches: [ main ]
+jobs:
+  build-setup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '10.0.x' # ใช้เวอร์ชันเดียวกับในเครื่องคุณ
+      - name: Publish
+        run: dotnet publish MyMudApp/MyMudApp.csproj -c Release -o release --nologo
+      - name: Upload Artifact
+        uses: actions/upload-pages-artifact@v2
+        with:
+          path: release/wwwroot
+  deploy:
+    needs: build-setup
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+    steps:
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v2
