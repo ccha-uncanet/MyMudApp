@@ -16,8 +16,8 @@ jobs:
           dotnet-version: '9.0.x' 
 
       - name: Publish Project
-        # ตรวจสอบว่า MyMudApp/MyMudApp.csproj คือที่อยู่ไฟล์ของคุณจริงๆ
-        run: dotnet publish MyMudApp/MyMudApp.csproj -c Release -o release
+        # ใช้คำสั่งหาไฟล์ .csproj อัตโนมัติ เพื่อป้องกันปัญหาเรื่องชื่อโฟลเดอร์ไม่ตรง
+        run: dotnet publish **/*.csproj -c Release -o release
 
       - name: Fix Service Worker and Base Href (Optional but helps)
         run: |
