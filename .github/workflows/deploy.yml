@@ -14,20 +14,25 @@ jobs:
           dotnet-version: '9.0.x'
 
       - name: Publish
-        # เราเจาะจงให้มันไปอยู่ที่โฟลเดอร์ 'output' แทนเพื่อกันสับสน
-        run: dotnet publish MyMudApp.Client/MyMudApp.Client.csproj -c Release -o output
+        # สร้างไฟล์ไปไว้ที่โฟลเดอร์ชื่อ release
+        run: dotnet publish MyMudApp.Client/MyMudApp.Client.csproj -c Release -o release
 
       - name: Fix for GitHub Pages
+        # เปลี่ยนจากการ copy เป็นการสร้างไฟล์ 404 และ .nojekyll ใหม่เลย
         run: |
-          # แก้ปัญหาเรื่อง Path ของไฟล์ index.html
-          cp output/wwwroot/index.html output/wwwroot/404.html
-          touch output/wwwroot/.nojekyll
+          echo "Fixing paths for GitHub Pages..."
+          # ตรวจสอบตำแหน่งไฟล์จริงและย้ายมาไว้ที่หน้าหลักของ release
+          mv release/wwwroot/* release/
+          # สร้างไฟล์ 404 จาก index
+          cp release/index.html release/404.html
+          # สร้างไฟล์ปิดกั้น Jekyll
+          touch release/.nojekyll
 
       - name: Upload Artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          # ชี้ไปที่โฟลเดอร์ output ที่เราเพิ่งสร้าง
-          path: output/wwwroot
+          # ชี้ไปที่ release โดยตรง
+          path: release
           
   deploy:
     needs: build-setup
