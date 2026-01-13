@@ -7,21 +7,28 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '9.0.x'
+
       - name: Publish
-        # สั่ง Build เฉพาะโปรเจกต์ Client เพื่อให้ได้ไฟล์ Static
+        # เราสั่ง Build ไปที่โปรเจกต์ .Client เพราะ GitHub Pages รันได้เฉพาะฝั่ง Client ครับ
         run: dotnet publish MyMudApp.Client/MyMudApp.Client.csproj -c Release -o release
+
       - name: Fix for GitHub Pages
         run: |
-          # Copy ไฟล์หน้าแรกไปเป็น 404 เพื่อกัน Error
+          # ป้องกัน Error 404 เวลาเพื่อนกด Refresh หน้าเว็บ
           cp release/wwwroot/index.html release/wwwroot/404.html
+          # บอก GitHub ว่าไม่ต้องใช้ Jekyll ประมวลผล
+          touch release/wwwroot/.nojekyll
+
       - name: Upload Artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: release/wwwroot
+
   deploy:
     needs: build-setup
     runs-on: ubuntu-latest
