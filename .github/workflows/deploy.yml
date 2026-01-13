@@ -15,44 +15,59 @@ jobs:
         run: dotnet publish MyMudApp.Client/MyMudApp.Client.csproj -c Release -o release
       - name: Find and Move index.html
         run: |
-          # แสดงโครงสร้างโฟลเดอร์
           echo "โครงสร้างโฟลเดอร์ release:"
-          ls -la release/
+          ls -laR release/
+          
+          echo "---"
+          echo "ค้นหา index.html:"
+          find release -name "index.html" -type f
           
           # หาว่า index.html อยู่ที่ไหน
           REAL_PATH=$(find release -name "index.html" -type f | head -n 1)
           
           if [ -z "$REAL_PATH" ]; then
-            echo "ไม่พบ index.html!"
+            echo "❌ ไม่พบ index.html!"
+            echo "ไฟล์ทั้งหมดใน release:"
+            find release -type f
             exit 1
           fi
           
           REAL_DIR=$(dirname "$REAL_PATH")
-          echo "เจอไฟล์ที่: $REAL_PATH"
-          echo "โฟลเดอร์: $REAL_DIR"
+          echo "✅ เจอไฟล์ที่: $REAL_PATH"
+          echo "📁 โฟลเดอร์: $REAL_DIR"
           
-          # ถ้า index.html ไม่ได้อยู่ที่ release/ ตรงๆ ให้ย้าย
+          # ถ้า index.html อยู่ใน wwwroot ให้ย้ายขึ้นมา
           if [ "$REAL_DIR" != "release" ]; then
-            echo "กำลังย้ายไฟล์..."
-            # ใช้ rsync แทน cp เพื่อความปลอดภัย
-            rsync -av "$REAL_DIR/" release_temp/
+            echo "🔄 กำลังย้ายไฟล์จาก $REAL_DIR ไปยัง release/"
+            
+            # สร้างโฟลเดอร์ชั่วคราว
+            mkdir -p /tmp/web_deploy
+            
+            # คัดลอกไฟล์ทั้งหมดจาก wwwroot ไปยัง temp
+            cp -r "$REAL_DIR"/* /tmp/web_deploy/
+            
+            # ลบ release เดิม
             rm -rf release
-            mv release_temp release
-            echo "ย้ายเสร็จแล้ว"
+            
+            # ย้าย temp กลับมาเป็น release
+            mv /tmp/web_deploy release
+            
+            echo "✅ ย้ายไฟล์เสร็จแล้ว"
           fi
           
-          # ตรวจสอบว่ามี index.html แล้ว
+          # ตรวจสอบอีกครั้ง
           if [ ! -f "release/index.html" ]; then
-            echo "Error: ไม่พบ index.html หลังย้าย!"
+            echo "❌ Error: ยังไม่พบ index.html หลังย้าย!"
+            ls -la release/
             exit 1
           fi
           
-          # สร้างไฟล์ที่จำเป็นสำหรับ GitHub Pages
+          # สร้างไฟล์สำหรับ GitHub Pages
           cp release/index.html release/404.html
           touch release/.nojekyll
           
-          echo "เสร็จสิ้น! ไฟล์ในโฟลเดอร์ release:"
-          ls -la release/
+          echo "✅ เสร็จสิ้น! ไฟล์ใน release:"
+          ls -la release/ | head -20
       - name: Upload Artifact
         uses: actions/upload-pages-artifact@v3
         with:
