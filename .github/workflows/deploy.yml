@@ -21,13 +21,14 @@ jobs:
           echo "เจอไฟล์ที่: $REAL_PATH"
           echo "โฟลเดอร์: $REAL_DIR"
           
-          # ย้ายไฟล์ทั้งหมดจาก wwwroot มาไว้ที่ temp ก่อน
-          mkdir -p temp
-          cp -r $REAL_DIR/* temp/
-          
-          # ลบ release เดิมและย้ายจาก temp มาแทน
-          rm -rf release
-          mv temp release
+          # ถ้า index.html อยู่ใน subdirectory ให้ย้ายขึ้นมา
+          if [ "$REAL_DIR" != "release" ]; then
+            # สร้างโฟลเดอร์ชั่วคราวนอก release
+            mkdir -p ../temp_deploy
+            cp -r $REAL_DIR/* ../temp_deploy/
+            rm -rf release
+            mv ../temp_deploy release
+          fi
           
           # สร้างไฟล์ที่จำเป็นสำหรับ GitHub Pages
           cp release/index.html release/404.html
