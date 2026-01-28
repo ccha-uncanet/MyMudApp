@@ -20,34 +20,63 @@ jobs:
     - name: Publish
       run: dotnet publish MyMudApp.Client/MyMudApp.Client.csproj -c Release -o release --nologo
     
-    - name: Debug - List directory structure
+    - name: Debug - Show full directory structure
       run: |
-        echo "=== Checking release folder structure ==="
-        find release -name "index.html" -type f
-        echo "=== Full directory tree ==="
+        echo "=== Complete directory tree of release folder ==="
         ls -R release/
+        echo ""
+        echo "=== Searching for index.html ==="
+        find release -name "*.html" -type f
+        echo ""
+        echo "=== Searching for wwwroot folders ==="
+        find release -type d -name "wwwroot"
+    
+    - name: Find and prepare wwwroot
+      run: |
+        echo "Looking for wwwroot directory..."
+        WWWROOT=$(find release -type d -name "wwwroot" | head -n 1)
+        
+        if [ -z "$WWWROOT" ]; then
+          echo "ERROR: wwwroot not found!"
+          echo "Checking what's in release:"
+          ls -la release/
+          exit 1
+        fi
+        
+        echo "Found wwwroot at: $WWWROOT"
+        
+        if [ ! -f "$WWWROOT/index.html" ]; then
+          echo "ERROR: index.html not found in $WWWROOT"
+          echo "Contents of wwwroot:"
+          ls -la "$WWWROOT/"
+          exit 1
+        fi
+        
+        echo "SUCCESS: index.html found at $WWWROOT/index.html"
+        echo "WWWROOT_PATH=$WWWROOT" >> $GITHUB_ENV
     
     - name: Change base-tag in index.html
       run: |
-        INDEX_PATH=$(find release -name "index.html" -type f | head -n 1)
-        echo "Found index.html at: $INDEX_PATH"
-        sed -i 's/<base href="\/" \/>/<base href="\/MyMudApp\/" \/>/g' "$INDEX_PATH"
+        sed -i 's/<base href="\/" \/>/<base href="\/MyMudApp\/" \/>/g' "$WWWROOT_PATH/index.html"
+        echo "Updated base href in index.html"
     
     - name: Copy index.html to 404.html
       run: |
-        INDEX_PATH=$(find release -name "index.html" -type f | head -n 1)
-        DIR_PATH=$(dirname "$INDEX_PATH")
-        cp "$INDEX_PATH" "$DIR_PATH/404.html"
-        echo "Copied 404.html to: $DIR_PATH"
+        cp "$WWWROOT_PATH/index.html" "$WWWROOT_PATH/404.html"
+        echo "Created 404.html"
     
     - name: Add .nojekyll file
       run: |
-        WWWROOT=$(find release -name "index.html" -type f | head -n 1 | xargs dirname)
-        touch "$WWWROOT/.nojekyll"
-        echo "Created .nojekyll in: $WWWROOT"
+        touch "$WWWROOT_PATH/.nojekyll"
+        echo "Created .nojekyll"
+    
+    - name: Verify files before deployment
+      run: |
+        echo "=== Files ready for deployment ==="
+        ls -la "$WWWROOT_PATH/"
     
     - name: Deploy to GitHub Pages
       uses: JamesIves/github-pages-deploy-action@v4
       with:
-        folder: release/wwwroot
+        folder: ${{ env.WWWROOT_PATH }}
         branch: gh-pages
