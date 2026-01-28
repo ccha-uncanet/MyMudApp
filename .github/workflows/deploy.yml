@@ -2,7 +2,7 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [ main ]  # หรือ master ตามชื่อ branch ของคุณ
+    branches: [ main ]
 
 jobs:
   deploy:
@@ -20,14 +20,31 @@ jobs:
     - name: Publish
       run: dotnet publish MyMudApp.Client/MyMudApp.Client.csproj -c Release -o release --nologo
     
-    - name: Change base-tag in index.html
-      run: sed -i 's/<base href="\/" \/>/<base href="\/MyMudApp\/" \/>/g' release/wwwroot/index.html
+    - name: Debug - List directory structure
+      run: |
+        echo "=== Checking release folder structure ==="
+        find release -name "index.html" -type f
+        echo "=== Full directory tree ==="
+        ls -R release/
     
-    - name: copy index.html to 404.html
-      run: cp release/wwwroot/index.html release/wwwroot/404.html
+    - name: Change base-tag in index.html
+      run: |
+        INDEX_PATH=$(find release -name "index.html" -type f | head -n 1)
+        echo "Found index.html at: $INDEX_PATH"
+        sed -i 's/<base href="\/" \/>/<base href="\/MyMudApp\/" \/>/g' "$INDEX_PATH"
+    
+    - name: Copy index.html to 404.html
+      run: |
+        INDEX_PATH=$(find release -name "index.html" -type f | head -n 1)
+        DIR_PATH=$(dirname "$INDEX_PATH")
+        cp "$INDEX_PATH" "$DIR_PATH/404.html"
+        echo "Copied 404.html to: $DIR_PATH"
     
     - name: Add .nojekyll file
-      run: touch release/wwwroot/.nojekyll
+      run: |
+        WWWROOT=$(find release -name "index.html" -type f | head -n 1 | xargs dirname)
+        touch "$WWWROOT/.nojekyll"
+        echo "Created .nojekyll in: $WWWROOT"
     
     - name: Deploy to GitHub Pages
       uses: JamesIves/github-pages-deploy-action@v4
