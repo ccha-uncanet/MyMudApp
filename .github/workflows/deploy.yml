@@ -17,66 +17,76 @@ jobs:
       with:
         dotnet-version: '9.0.x'
     
+    # สร้าง index.html จาก App.razor ก่อน Publish
+    - name: Create index.html from App.razor
+      run: |
+        mkdir -p MyMudApp.Client/wwwroot
+        cat > MyMudApp.Client/wwwroot/index.html << 'EOF'
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="utf-8" />
+            <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+            <title>MyMudApp</title>
+            <base href="/" />
+            <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" rel="stylesheet" />
+            <link href="_content/MudBlazor/MudBlazor.min.css" rel="stylesheet" />
+        </head>
+        <body>
+            <div id="app">
+                <svg class="loading-progress">
+                    <circle r="40%" cx="50%" cy="50%" />
+                    <circle r="40%" cx="50%" cy="50%" />
+                </svg>
+                <div class="loading-progress-text"></div>
+            </div>
+            <div id="blazor-error-ui">
+                An unhandled error has occurred.
+                <a href="" class="reload">Reload</a>
+                <a class="dismiss">🗙</a>
+            </div>
+            <script src="_framework/blazor.webassembly.js"></script>
+            <script src="_content/MudBlazor/MudBlazor.min.js"></script>
+        </body>
+        </html>
+        EOF
+        echo "Created index.html in MyMudApp.Client/wwwroot/"
+    
     - name: Publish
       run: dotnet publish MyMudApp.Client/MyMudApp.Client.csproj -c Release -o release --nologo
     
-    - name: Debug - Show full directory structure
+    - name: Verify index.html exists
       run: |
-        echo "=== Complete directory tree of release folder ==="
-        ls -R release/
-        echo ""
-        echo "=== Searching for index.html ==="
-        find release -name "*.html" -type f
-        echo ""
-        echo "=== Searching for wwwroot folders ==="
-        find release -type d -name "wwwroot"
-    
-    - name: Find and prepare wwwroot
-      run: |
-        echo "Looking for wwwroot directory..."
-        WWWROOT=$(find release -type d -name "wwwroot" | head -n 1)
-        
-        if [ -z "$WWWROOT" ]; then
-          echo "ERROR: wwwroot not found!"
-          echo "Checking what's in release:"
-          ls -la release/
+        if [ -f "release/wwwroot/index.html" ]; then
+          echo "✓ index.html found!"
+          ls -lh release/wwwroot/index.html
+        else
+          echo "✗ index.html still missing!"
           exit 1
         fi
-        
-        echo "Found wwwroot at: $WWWROOT"
-        
-        if [ ! -f "$WWWROOT/index.html" ]; then
-          echo "ERROR: index.html not found in $WWWROOT"
-          echo "Contents of wwwroot:"
-          ls -la "$WWWROOT/"
-          exit 1
-        fi
-        
-        echo "SUCCESS: index.html found at $WWWROOT/index.html"
-        echo "WWWROOT_PATH=$WWWROOT" >> $GITHUB_ENV
     
     - name: Change base-tag in index.html
       run: |
-        sed -i 's/<base href="\/" \/>/<base href="\/MyMudApp\/" \/>/g' "$WWWROOT_PATH/index.html"
-        echo "Updated base href in index.html"
+        sed -i 's/<base href="\/" \/>/<base href="\/MyMudApp\/" \/>/g' release/wwwroot/index.html
+        echo "Updated base href to /MyMudApp/"
     
     - name: Copy index.html to 404.html
       run: |
-        cp "$WWWROOT_PATH/index.html" "$WWWROOT_PATH/404.html"
+        cp release/wwwroot/index.html release/wwwroot/404.html
         echo "Created 404.html"
     
     - name: Add .nojekyll file
       run: |
-        touch "$WWWROOT_PATH/.nojekyll"
+        touch release/wwwroot/.nojekyll
         echo "Created .nojekyll"
     
-    - name: Verify files before deployment
+    - name: Verify all files
       run: |
         echo "=== Files ready for deployment ==="
-        ls -la "$WWWROOT_PATH/"
+        ls -lh release/wwwroot/ | grep -E "index|404|nojekyll"
     
     - name: Deploy to GitHub Pages
       uses: JamesIves/github-pages-deploy-action@v4
       with:
-        folder: ${{ env.WWWROOT_PATH }}
+        folder: release/wwwroot
         branch: gh-pages
