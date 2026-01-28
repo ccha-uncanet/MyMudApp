@@ -12,62 +12,17 @@ jobs:
         with:
           dotnet-version: '9.0.x'
       - name: Publish
+        # สั่ง Build เข้าที่ตัว Client ตามโครงสร้างของคุณ
         run: dotnet publish MyMudApp.Client/MyMudApp.Client.csproj -c Release -o release
       - name: Find and Move index.html
         run: |
-          echo "โครงสร้างโฟลเดอร์ release:"
-          ls -laR release/
-          
-          echo "---"
-          echo "ค้นหา index.html:"
-          find release -name "index.html" -type f
-          
-          # หาว่า index.html อยู่ที่ไหน
-          REAL_PATH=$(find release -name "index.html" -type f | head -n 1)
-          
-          if [ -z "$REAL_PATH" ]; then
-            echo "❌ ไม่พบ index.html!"
-            echo "ไฟล์ทั้งหมดใน release:"
-            find release -type f
-            exit 1
-          fi
-          
+          # สั่งให้ระบบค้นหา index.html เองว่าอยู่โฟลเดอร์ไหน
+          REAL_PATH=$(find release -name "index.html" | head -n 1)
           REAL_DIR=$(dirname "$REAL_PATH")
-          echo "✅ เจอไฟล์ที่: $REAL_PATH"
-          echo "📁 โฟลเดอร์: $REAL_DIR"
-          
-          # ถ้า index.html อยู่ใน wwwroot ให้ย้ายขึ้นมา
-          if [ "$REAL_DIR" != "release" ]; then
-            echo "🔄 กำลังย้ายไฟล์จาก $REAL_DIR ไปยัง release/"
-            
-            # สร้างโฟลเดอร์ชั่วคราว
-            mkdir -p /tmp/web_deploy
-            
-            # คัดลอกไฟล์ทั้งหมดจาก wwwroot ไปยัง temp
-            cp -r "$REAL_DIR"/* /tmp/web_deploy/
-            
-            # ลบ release เดิม
-            rm -rf release
-            
-            # ย้าย temp กลับมาเป็น release
-            mv /tmp/web_deploy release
-            
-            echo "✅ ย้ายไฟล์เสร็จแล้ว"
-          fi
-          
-          # ตรวจสอบอีกครั้ง
-          if [ ! -f "release/index.html" ]; then
-            echo "❌ Error: ยังไม่พบ index.html หลังย้าย!"
-            ls -la release/
-            exit 1
-          fi
-          
-          # สร้างไฟล์สำหรับ GitHub Pages
+          # ย้ายไฟล์ทั้งหมดออกมาไว้ข้างนอกให้ GitHub Pages เห็น
+          cp -r $REAL_DIR/* release/
           cp release/index.html release/404.html
           touch release/.nojekyll
-          
-          echo "✅ เสร็จสิ้น! ไฟล์ใน release:"
-          ls -la release/ | head -20
       - name: Upload Artifact
         uses: actions/upload-pages-artifact@v3
         with:
