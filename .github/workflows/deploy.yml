@@ -1,46 +1,36 @@
 name: Deploy to GitHub Pages
+
 on:
   push:
-    branches: [ main ]
+    branches: [ main ]  # หรือ master ตามชื่อ branch ของคุณ
+
 jobs:
-  build-setup:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '9.0.x'
-
-      - name: Publish
-        # 1. สร้างไฟล์ผลลัพธ์ไว้ที่โฟลเดอร์ชื่อ 'dotnet_output'
-        run: dotnet publish MyMudApp.Client/MyMudApp.Client.csproj -c Release -o dotnet_output
-
-      - name: Prepare Final Site
-        run: |
-          # 2. สร้างโฟลเดอร์ใหม่ชื่อ 'gh_pages_site' สำหรับส่งขึ้นเว็บเท่านั้น
-          mkdir gh_pages_site
-          # 3. ค้นหาตำแหน่ง wwwroot จริงๆ (ที่เก็บ index.html)
-          REAL_WWWROOT=$(find dotnet_output -name "wwwroot" -type d | head -n 1)
-          # 4. ก๊อปปี้ไฟล์ทั้งหมดจาก wwwroot ไปไว้ใน gh_pages_site
-          cp -r $REAL_WWWROOT/* gh_pages_site/
-          # 5. สร้างไฟล์สำรองป้องกัน Error 404 และ NoJekyll
-          cp gh_pages_site/index.html gh_pages_site/404.html
-          touch gh_pages_site/.nojekyll
-
-      - name: Upload Artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: gh_pages_site
-
   deploy:
-    needs: build-setup
     runs-on: ubuntu-latest
-    permissions:
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
+    
     steps:
-      - name: Deploy to GitHub Pages
-        uses: actions/deploy-pages@v4
+    - name: Checkout
+      uses: actions/checkout@v3
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: '9.0.x'
+    
+    - name: Publish
+      run: dotnet publish MyMudApp.Client/MyMudApp.Client.csproj -c Release -o release --nologo
+    
+    - name: Change base-tag in index.html
+      run: sed -i 's/<base href="\/" \/>/<base href="\/MyMudApp\/" \/>/g' release/wwwroot/index.html
+    
+    - name: copy index.html to 404.html
+      run: cp release/wwwroot/index.html release/wwwroot/404.html
+    
+    - name: Add .nojekyll file
+      run: touch release/wwwroot/.nojekyll
+    
+    - name: Deploy to GitHub Pages
+      uses: JamesIves/github-pages-deploy-action@v4
+      with:
+        folder: release/wwwroot
+        branch: gh-pages
