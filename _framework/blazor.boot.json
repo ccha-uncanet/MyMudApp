@@ -1,7 +1,7 @@
 {
   "mainAssemblyName": "MyMudApp.Client",
   "resources": {
-    "hash": "sha256-FA1fJS/Wm+hSU2zKc9fnkNQgiuBfKy12nlFUKy9XcCw=",
+    "hash": "sha256-kID121GCY9DbGw/znOM2SMw0GuYQuxrE0Oh1Mm1WK7E=",
     "fingerprinting": {
       "Microsoft.AspNetCore.Components.sdahluvexy.wasm": "Microsoft.AspNetCore.Components.wasm",
       "Microsoft.AspNetCore.Components.Forms.45varc47rk.wasm": "Microsoft.AspNetCore.Components.Forms.wasm",
@@ -39,7 +39,7 @@
       "System.Text.Json.es2ru39o3d.wasm": "System.Text.Json.wasm",
       "System.Text.RegularExpressions.l21p1pbics.wasm": "System.Text.RegularExpressions.wasm",
       "System.Private.CoreLib.elzl4s4mt7.wasm": "System.Private.CoreLib.wasm",
-      "MyMudApp.Client.4resemcp3d.wasm": "MyMudApp.Client.wasm",
+      "MyMudApp.Client.f0seizynns.wasm": "MyMudApp.Client.wasm",
       "dotnet.js": "dotnet.js",
       "dotnet.native.xidrk0eo52.js": "dotnet.native.js",
       "dotnet.native.y68cfu4kuf.wasm": "dotnet.native.wasm",
@@ -101,7 +101,7 @@
       "System.Text.Encodings.Web.o1u5cni2f7.wasm": "sha256-XA/TYsmBjGxujHR8rOUlpMceEpdp3hxWBN/+V4TDwEQ=",
       "System.Text.Json.es2ru39o3d.wasm": "sha256-Il9HNjTGctPQgnJzOGfavaXpgS+dzY2s+WsU9BEzcQ8=",
       "System.Text.RegularExpressions.l21p1pbics.wasm": "sha256-rab3vcVHKfhFo4VkULlpFLi3xmtoh4m2g9kRd8yQt3c=",
-      "MyMudApp.Client.4resemcp3d.wasm": "sha256-sB/ls3xsZWIICAp3e5eXgkc8cu+RLKI0BgPvsBV4Cew="
+      "MyMudApp.Client.f0seizynns.wasm": "sha256-sdxEyF92JfuYrsu/P0Pjl1jaXeZp0kSuqkDMxw7geSM="
     }
   },
   "cacheBootResources": true,
