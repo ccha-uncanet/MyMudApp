@@ -11,24 +11,28 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '9.0.x'
+
       - name: Publish
-        # สร้างไฟล์ไว้ที่ temp_build
-        run: dotnet publish MyMudApp.Client/MyMudApp.Client.csproj -c Release -o temp_build
-      - name: Prepare Final Files
+        # เก็บไฟล์ที่ Build เสร็จแล้วไว้ในโฟลเดอร์ temp_output
+        run: dotnet publish MyMudApp.Client/MyMudApp.Client.csproj -c Release -o temp_output
+
+      - name: Prepare Site Files
         run: |
-          # 1. สร้างโฟลเดอร์ใหม่ชื่อ web_files สำหรับส่งขึ้นเว็บโดยเฉพาะ
-          mkdir web_files
-          # 2. ค้นหา index.html อัตโนมัติ (เผื่อ .NET เอาไปซ่อนไว้ลึก)
-          REAL_PATH=$(find temp_build -name "index.html" | head -n 1)
-          REAL_DIR=$(dirname "$REAL_PATH")
-          # 3. ก๊อปปี้ไฟล์จากจุดที่เจอ ไปไว้ที่ web_files
-          cp -r "$REAL_DIR"/* web_files/
-          cp web_files/index.html web_files/404.html
-          touch web_files/.nojekyll
+          # 1. สร้างโฟลเดอร์ใหม่ชื่อ "site_root" เพื่อความชัดเจน
+          mkdir site_root
+          # 2. ค้นหาตำแหน่ง wwwroot จริงๆ (ที่เก็บ index.html) 
+          WWWROOT_PATH=$(find temp_output -name "wwwroot" -type d | head -n 1)
+          # 3. ก๊อปปี้ไฟล์ทั้งหมดจาก wwwroot ไปไว้ใน site_root
+          cp -r $WWWROOT_PATH/* site_root/
+          # 4. สร้างไฟล์ 404 และ .nojekyll
+          cp site_root/index.html site_root/404.html
+          touch site_root/.nojekyll
+
       - name: Upload Artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: web_files
+          path: site_root
+
   deploy:
     needs: build-setup
     runs-on: ubuntu-latest
