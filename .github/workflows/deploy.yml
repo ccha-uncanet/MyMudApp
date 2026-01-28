@@ -13,27 +13,27 @@ jobs:
           dotnet-version: '9.0.x'
 
       - name: Publish
-        # สั่ง Build ไปที่โฟลเดอร์ build_output
-        run: dotnet publish MyMudApp.Client/MyMudApp.Client.csproj -c Release -o build_output
+        # สร้างโฟลเดอร์ชั่วคราวชื่อ temp_build
+        run: dotnet publish MyMudApp.Client/MyMudApp.Client.csproj -c Release -o temp_build
 
       - name: Find and Prepare Files
         run: |
-          # สร้างโฟลเดอร์ใหม่สำหรับส่งขึ้นเว็บโดยเฉพาะ
-          mkdir final_output
-          # ค้นหาว่า index.html อยู่ที่ไหน
-          REAL_PATH=$(find build_output -name "index.html" | head -n 1)
+          # สร้างโฟลเดอร์ใหม่สำหรับส่งขึ้นเว็บโดยเฉพาะ เพื่อป้องกันการก๊อปปี้ทับตัวเอง
+          mkdir final_site
+          # ค้นหาว่า index.html แอบอยู่ที่ไหน
+          REAL_PATH=$(find temp_build -name "index.html" | head -n 1)
           REAL_DIR=$(dirname "$REAL_PATH")
-          echo "เจอไฟล์ที่: $REAL_DIR"
-          # ก๊อปปี้ไฟล์จากโฟลเดอร์ที่เจอ ไปไว้ที่ final_output
-          cp -r "$REAL_DIR"/* final_output/
-          # สร้างไฟล์ที่ GitHub Pages ต้องการ
-          cp final_output/index.html final_output/404.html
-          touch final_output/.nojekyll
+          echo "Found files in: $REAL_DIR"
+          # ก๊อปปี้ไฟล์ทั้งหมดจากจุดที่เจอ ไปไว้ที่ final_site
+          cp -r "$REAL_DIR"/* final_site/
+          # สร้างไฟล์สำรองป้องกัน 404
+          cp final_site/index.html final_site/404.html
+          touch final_site/.nojekyll
 
       - name: Upload Artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: final_output
+          path: final_site
 
   deploy:
     needs: build-setup
