@@ -13,20 +13,17 @@ jobs:
           dotnet-version: '9.0.x'
 
       - name: Publish
-        # สร้างโฟลเดอร์ชั่วคราวชื่อ temp_build
+        # สร้างโฟลเดอร์แยกชื่อ temp_build เพื่อป้องกันการ copy วนลูป
         run: dotnet publish MyMudApp.Client/MyMudApp.Client.csproj -c Release -o temp_build
 
       - name: Find and Prepare Files
         run: |
-          # สร้างโฟลเดอร์ใหม่สำหรับส่งขึ้นเว็บโดยเฉพาะ เพื่อป้องกันการก๊อปปี้ทับตัวเอง
           mkdir final_site
-          # ค้นหาว่า index.html แอบอยู่ที่ไหน
+          # ค้นหา index.html อัตโนมัติจากทุกโฟลเดอร์ย่อย
           REAL_PATH=$(find temp_build -name "index.html" | head -n 1)
           REAL_DIR=$(dirname "$REAL_PATH")
-          echo "Found files in: $REAL_DIR"
-          # ก๊อปปี้ไฟล์ทั้งหมดจากจุดที่เจอ ไปไว้ที่ final_site
+          # ก๊อปปี้ไฟล์จากจุดที่เจอไปยังโฟลเดอร์ใหม่
           cp -r "$REAL_DIR"/* final_site/
-          # สร้างไฟล์สำรองป้องกัน 404
           cp final_site/index.html final_site/404.html
           touch final_site/.nojekyll
 
