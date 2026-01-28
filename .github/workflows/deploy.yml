@@ -1,79 +1,37 @@
 name: Deploy to GitHub Pages
-
 on:
   push:
     branches: [ main ]
-
 permissions:
   contents: write
   pages: write
   id-token: write
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    
     steps:
-    - name: Checkout
-      uses: actions/checkout@v3
-    
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v3
-      with:
-        dotnet-version: '9.0.x'
-    
-    - name: Create index.html from App.razor
-      run: |
-        mkdir -p MyMudApp.Client/wwwroot
-        cat > MyMudApp.Client/wwwroot/index.html << 'EOF'
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="utf-8" />
-            <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-            <title>MyMudApp</title>
-            <base href="/" />
-            <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" rel="stylesheet" />
-            <link href="_content/MudBlazor/MudBlazor.min.css" rel="stylesheet" />
-        </head>
-        <body>
-            <div id="app">
-                <svg class="loading-progress">
-                    <circle r="40%" cx="50%" cy="50%" />
-                    <circle r="40%" cx="50%" cy="50%" />
-                </svg>
-                <div class="loading-progress-text"></div>
-            </div>
-            <div id="blazor-error-ui">
-                An unhandled error has occurred.
-                <a href="" class="reload">Reload</a>
-                <a class="dismiss">🗙</a>
-            </div>
-            <script src="_framework/blazor.webassembly.js"></script>
-            <script src="_content/MudBlazor/MudBlazor.min.js"></script>
-        </body>
-        </html>
-        EOF
-        echo "Created index.html"
-    
-    - name: Publish
-      run: dotnet publish MyMudApp.Client/MyMudApp.Client.csproj -c Release -o release --nologo
-    
-    - name: Change base-tag in index.html
-      run: |
-        sed -i 's/<base href="\/" \/>/<base href="\/MyMudApp\/" \/>/g' release/wwwroot/index.html
-        echo "Updated base href"
-    
-    - name: Copy index.html to 404.html
-      run: cp release/wwwroot/index.html release/wwwroot/404.html
-    
-    - name: Add .nojekyll file
-      run: touch release/wwwroot/.nojekyll
-    
-    - name: Deploy to GitHub Pages
-      uses: JamesIves/github-pages-deploy-action@v4
-      with:
-        token: ${{ secrets.GITHUB_TOKEN }}
-        folder: release/wwwroot
-        branch: gh-pages
-        clean: true
+      - uses: actions/checkout@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+      - name: Publish
+        # สั่ง Publish และระบุโฟลเดอร์ผลลัพธ์ให้ชัดเจน
+        run: dotnet publish MyMudApp.Client/MyMudApp.Client.csproj -c Release -o release --nologo
+      - name: Prepare Index for GitHub Pages
+        run: |
+          # เข้าไปที่โฟลเดอร์ wwwroot ที่ .NET สร้างขึ้น
+          cd release/wwwroot
+          # ถ้าไม่มี index.html (ปัญหาของ .NET 9) ให้สร้างใหม่
+          if [ ! -f "index.html" ]; then
+            cp _framework/blazor.webassembly.js index.html # สร้างไฟล์หลอกขึ้นมาถ้าหาไม่เจอ
+          fi
+          # ใช้คำสั่งแก้ base href ให้ถูกต้อง
+          sed -i 's|<base href="/" />|<base href="/MyMudApp/" />|g' index.html
+          cp index.html 404.html
+          touch .nojekyll
+      - name: Deploy to GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: release/wwwroot
+          branch: gh-pages
