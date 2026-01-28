@@ -16,12 +16,12 @@ jobs:
         run: dotnet publish MyMudApp.Client/MyMudApp.Client.csproj -c Release -o temp_build
       - name: Prepare Final Files
         run: |
-          # สร้างโฟลเดอร์ใหม่ชื่อสำหรับส่งขึ้นเว็บโดยเฉพาะ
+          # 1. สร้างโฟลเดอร์ใหม่ชื่อ web_files สำหรับส่งขึ้นเว็บโดยเฉพาะ
           mkdir web_files
-          # ค้นหา index.html อัตโนมัติ (เผื่อ .NET เอาไปซ่อนไว้ลึก)
+          # 2. ค้นหา index.html อัตโนมัติ (เผื่อ .NET เอาไปซ่อนไว้ลึก)
           REAL_PATH=$(find temp_build -name "index.html" | head -n 1)
           REAL_DIR=$(dirname "$REAL_PATH")
-          # ก๊อปปี้ไฟล์จากจุดที่เจอ ไปไว้ที่ web_files
+          # 3. ก๊อปปี้ไฟล์จากจุดที่เจอ ไปไว้ที่ web_files
           cp -r "$REAL_DIR"/* web_files/
           cp web_files/index.html web_files/404.html
           touch web_files/.nojekyll
