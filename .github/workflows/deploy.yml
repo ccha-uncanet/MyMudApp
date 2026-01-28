@@ -11,22 +11,30 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '9.0.x'
+
       - name: Publish
-        # สั่ง Build เข้าที่ตัว Client ตามโครงสร้างของคุณ
-        run: dotnet publish MyMudApp.Client/MyMudApp.Client.csproj -c Release -o release
-      - name: Find and Move index.html
+        # สั่ง Build ไปที่โฟลเดอร์ build_output
+        run: dotnet publish MyMudApp.Client/MyMudApp.Client.csproj -c Release -o build_output
+
+      - name: Find and Prepare Files
         run: |
-          # สั่งให้ระบบค้นหา index.html เองว่าอยู่โฟลเดอร์ไหน
-          REAL_PATH=$(find release -name "index.html" | head -n 1)
+          # สร้างโฟลเดอร์ใหม่สำหรับส่งขึ้นเว็บโดยเฉพาะ
+          mkdir final_output
+          # ค้นหาว่า index.html อยู่ที่ไหน
+          REAL_PATH=$(find build_output -name "index.html" | head -n 1)
           REAL_DIR=$(dirname "$REAL_PATH")
-          # ย้ายไฟล์ทั้งหมดออกมาไว้ข้างนอกให้ GitHub Pages เห็น
-          cp -r $REAL_DIR/* release/
-          cp release/index.html release/404.html
-          touch release/.nojekyll
+          echo "เจอไฟล์ที่: $REAL_DIR"
+          # ก๊อปปี้ไฟล์จากโฟลเดอร์ที่เจอ ไปไว้ที่ final_output
+          cp -r "$REAL_DIR"/* final_output/
+          # สร้างไฟล์ที่ GitHub Pages ต้องการ
+          cp final_output/index.html final_output/404.html
+          touch final_output/.nojekyll
+
       - name: Upload Artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: release
+          path: final_output
+
   deploy:
     needs: build-setup
     runs-on: ubuntu-latest
