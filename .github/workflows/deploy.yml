@@ -11,27 +11,24 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '9.0.x'
-
       - name: Publish
-        # สร้างโฟลเดอร์แยกชื่อ temp_build เพื่อป้องกันการ copy วนลูป
-        run: dotnet publish MyMudApp.Client/MyMudApp.Client.csproj -c Release -o temp_build
-
+        # สร้างโฟลเดอร์ชั่วคราวชื่อ temp_output
+        run: dotnet publish MyMudApp.Client/MyMudApp.Client.csproj -c Release -o temp_output
       - name: Find and Prepare Files
         run: |
-          mkdir final_site
+          # สร้างโฟลเดอร์ใหม่สำหรับส่งขึ้นเว็บโดยเฉพาะ
+          mkdir final_deployment
           # ค้นหา index.html อัตโนมัติจากทุกโฟลเดอร์ย่อย
-          REAL_PATH=$(find temp_build -name "index.html" | head -n 1)
+          REAL_PATH=$(find temp_output -name "index.html" | head -n 1)
           REAL_DIR=$(dirname "$REAL_PATH")
           # ก๊อปปี้ไฟล์จากจุดที่เจอไปยังโฟลเดอร์ใหม่
-          cp -r "$REAL_DIR"/* final_site/
-          cp final_site/index.html final_site/404.html
-          touch final_site/.nojekyll
-
+          cp -r "$REAL_DIR"/* final_deployment/
+          cp final_deployment/index.html final_deployment/404.html
+          touch final_deployment/.nojekyll
       - name: Upload Artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: final_site
-
+          path: final_deployment
   deploy:
     needs: build-setup
     runs-on: ubuntu-latest
