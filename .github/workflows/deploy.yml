@@ -4,6 +4,11 @@ on:
   push:
     branches: [ main ]
 
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -17,7 +22,6 @@ jobs:
       with:
         dotnet-version: '9.0.x'
     
-    # สร้าง index.html จาก App.razor ก่อน Publish
     - name: Create index.html from App.razor
       run: |
         mkdir -p MyMudApp.Client/wwwroot
@@ -50,43 +54,26 @@ jobs:
         </body>
         </html>
         EOF
-        echo "Created index.html in MyMudApp.Client/wwwroot/"
+        echo "Created index.html"
     
     - name: Publish
       run: dotnet publish MyMudApp.Client/MyMudApp.Client.csproj -c Release -o release --nologo
     
-    - name: Verify index.html exists
-      run: |
-        if [ -f "release/wwwroot/index.html" ]; then
-          echo "✓ index.html found!"
-          ls -lh release/wwwroot/index.html
-        else
-          echo "✗ index.html still missing!"
-          exit 1
-        fi
-    
     - name: Change base-tag in index.html
       run: |
         sed -i 's/<base href="\/" \/>/<base href="\/MyMudApp\/" \/>/g' release/wwwroot/index.html
-        echo "Updated base href to /MyMudApp/"
+        echo "Updated base href"
     
     - name: Copy index.html to 404.html
-      run: |
-        cp release/wwwroot/index.html release/wwwroot/404.html
-        echo "Created 404.html"
+      run: cp release/wwwroot/index.html release/wwwroot/404.html
     
     - name: Add .nojekyll file
-      run: |
-        touch release/wwwroot/.nojekyll
-        echo "Created .nojekyll"
-    
-    - name: Verify all files
-      run: |
-        echo "=== Files ready for deployment ==="
-        ls -lh release/wwwroot/ | grep -E "index|404|nojekyll"
+      run: touch release/wwwroot/.nojekyll
     
     - name: Deploy to GitHub Pages
       uses: JamesIves/github-pages-deploy-action@v4
       with:
+        token: ${{ secrets.GITHUB_TOKEN }}
         folder: release/wwwroot
         branch: gh-pages
+        clean: true
