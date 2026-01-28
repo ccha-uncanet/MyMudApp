@@ -13,20 +13,26 @@ jobs:
           dotnet-version: '9.0.x'
 
       - name: Publish
-        # สั่ง Build ไปที่โฟลเดอร์ชื่อ publish
-        run: dotnet publish MyMudApp.Client/MyMudApp.Client.csproj -c Release -o publish
+        # เก็บไฟล์ที่ Build เสร็จแล้วไว้ในโฟลเดอร์ชื่อ publish_folder
+        run: dotnet publish MyMudApp.Client/MyMudApp.Client.csproj -c Release -o publish_folder
 
-      - name: Fix 404 and NoJekyll
-        # วิ่งเข้าไปสร้างไฟล์ในโฟลเดอร์ publish/wwwroot โดยตรง
+      - name: Prepare Final Site
         run: |
-          cp publish/wwwroot/index.html publish/wwwroot/404.html
-          touch publish/wwwroot/.nojekyll
+          # 1. สร้างโฟลเดอร์ใหม่ชื่อ "deploy_site" แยกต่างหากเพื่อกันการก๊อปปี้วนลูป
+          mkdir deploy_site
+          # 2. ค้นหาตำแหน่งไฟล์ index.html จริงๆ (เพราะ .NET 9 มักจะซ่อนไว้ลึก)
+          REAL_DIR=$(find publish_folder -name "index.html" | xargs dirname)
+          echo "Found static files at: $REAL_DIR"
+          # 3. ก๊อปปี้ไฟล์ทั้งหมดจากจุดที่เจอ ไปไว้ใน deploy_site
+          cp -r "$REAL_DIR"/* deploy_site/
+          # 4. สร้างไฟล์ 404 และ .nojekyll ให้ GitHub Pages
+          cp deploy_site/index.html deploy_site/404.html
+          touch deploy_site/.nojekyll
 
       - name: Upload Artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          # ชี้ไปที่จุดที่ .NET สร้างไฟล์เว็บออกมาจริงๆ
-          path: publish/wwwroot
+          path: deploy_site
 
   deploy:
     needs: build-setup
